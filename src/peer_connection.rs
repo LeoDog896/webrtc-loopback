@@ -27,7 +27,7 @@ use crate::signal;
 
 const OGG_PAGE_DURATION: Duration = Duration::from_millis(20);
 
-async fn main(audio: Option<String>, video: Option<String>, debug: bool) -> Result<()> {
+pub async fn connect(audio: Option<String>, video: Option<String>, debug: bool) -> Result<()> {
     if debug {
         env_logger::Builder::new()
             .format(|buf, record| {

@@ -1,8 +1,11 @@
 #[macro_use]
 extern crate lazy_static;
 
-mod webrtc;
+mod peer_connection;
 mod signal;
+
+use anyhow::Result;
+use peer_connection::connect;
 
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
@@ -33,14 +36,21 @@ async fn echo(req_body: String) -> impl Responder {
 }
 
 #[actix_web::main]
-async fn main() -> std::io::Result<()> {
+async fn main() -> Result<()> {
     let args = Args::parse();
     let port = args.port;
+
+    // Start up the peer connection in a separate thread
+    tokio::spawn(async move {
+        if let Err(e) = connect(args.audio, args.video, true).await {
+            eprintln!("Error: {}", e);
+        }
+    });
 
     println!("Starting server at http://127.0.0.1:{}/", port);
 
     HttpServer::new(|| App::new().service(hello).service(echo))
         .bind(("127.0.0.1", port))?
         .run()
-        .await
+        .await.map_err(anyhow::Error::from)
 }
