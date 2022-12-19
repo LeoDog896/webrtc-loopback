@@ -22,18 +22,13 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-
     let args = Args::parse();
     let port = args.port;
 
     println!("Starting server at http://127.0.0.1:{}/", port);
 
-    HttpServer::new(|| {
-        App::new()
-            .service(hello)
-            .service(echo)
-    })
-    .bind(("127.0.0.1", port))?
-    .run()
-    .await
+    HttpServer::new(|| App::new().service(hello).service(echo))
+        .bind(("127.0.0.1", port))?
+        .run()
+        .await
 }
