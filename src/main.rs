@@ -1,4 +1,14 @@
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use clap::Parser;
+
+/// Start up a webrtc-media server
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Port to use
+    #[arg(short, long, default_value_t = 8080)]
+    port: u16,
+}
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -12,12 +22,18 @@ async fn echo(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+
+    let args = Args::parse();
+    let port = args.port;
+
+    println!("Starting server at http://127.0.0.1:{}/", port);
+
     HttpServer::new(|| {
         App::new()
             .service(hello)
             .service(echo)
     })
-    .bind(("127.0.0.1", 8080))?
+    .bind(("127.0.0.1", port))?
     .run()
     .await
 }
