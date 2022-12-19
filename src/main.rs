@@ -1,3 +1,9 @@
+#[macro_use]
+extern crate lazy_static;
+
+mod webrtc;
+mod signal;
+
 use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
 
@@ -8,6 +14,12 @@ struct Args {
     /// Port to use
     #[arg(short, long, default_value_t = 8080)]
     port: u16,
+
+    /// Audio file to play
+    audio: Option<String>,
+
+    /// Video file to play
+    video: Option<String>,
 }
 
 #[get("/")]
