@@ -1,11 +1,10 @@
 use anyhow::{anyhow, Result};
-use tokio::sync::mpsc::Receiver;
-use webrtc::peer_connection::RTCPeerConnection;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
+use tokio::sync::mpsc::Receiver;
 use tokio::sync::Notify;
 use tokio::time::Duration;
 use webrtc::api::interceptor_registry::register_default_interceptors;
@@ -20,6 +19,7 @@ use webrtc::media::Sample;
 use webrtc::peer_connection::configuration::RTCConfiguration;
 use webrtc::peer_connection::peer_connection_state::RTCPeerConnectionState;
 use webrtc::peer_connection::sdp::session_description::RTCSessionDescription;
+use webrtc::peer_connection::RTCPeerConnection;
 use webrtc::rtp_transceiver::rtp_codec::RTCRtpCodecCapability;
 use webrtc::track::track_local::track_local_static_sample::TrackLocalStaticSample;
 use webrtc::track::track_local::TrackLocal;
@@ -30,7 +30,7 @@ const OGG_PAGE_DURATION: Duration = Duration::from_millis(20);
 pub struct PeerConnectionInfo {
     pub connection: Arc<RTCPeerConnection>,
     pub description: RTCSessionDescription,
-    pub closer: Receiver<()>
+    pub closer: Receiver<()>,
 }
 
 pub async fn connect(
@@ -311,8 +311,8 @@ pub async fn connect(
     if let Some(local_desc) = peer_connection.local_description().await {
         Ok(PeerConnectionInfo {
             connection: peer_connection,
-            description: local_desc, 
-            closer: done_rx
+            description: local_desc,
+            closer: done_rx,
         })
     } else {
         Err(anyhow!("Failed to get local description"))

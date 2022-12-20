@@ -56,7 +56,7 @@ async fn main() -> Result<()> {
 
     println!("Starting server at http://{host}:{port}/");
 
-    HttpServer::new(|| App::new().wrap(Cors::permissive().send_wildcard()).service(webrtc_offer))
+    HttpServer::new(|| App::new().wrap(Cors::default().allow_any_origin().send_wildcard()).service(webrtc_offer))
         .bind((host, port))?
         .run()
         .await
