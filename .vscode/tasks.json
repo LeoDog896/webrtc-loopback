@@ -6,7 +6,7 @@
         {
             "label": "WebRTC Media",
             "type": "shell",
-            "command": "cargo run --watch",
+            "command": "cargo run -- --video videos/horse_drawn.mkv",
             "isBackground": true,
 			"presentation": {
 				"group": "examples",

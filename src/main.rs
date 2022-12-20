@@ -20,9 +20,11 @@ struct Args {
     port: u16,
 
     /// Audio file to play
+    #[arg(short, long)]
     audio: Option<String>,
 
     /// Video file to play
+    #[arg(short, long)]
     video: Option<String>,
 }
 
