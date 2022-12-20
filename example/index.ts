@@ -7,3 +7,12 @@ const peerConnection = new RTCPeerConnection(config);
 
 const video = document.querySelector<HTMLVideoElement>("localVideo")!;
 
+async function main() {
+    // create offer
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+
+    
+}
+
+main()
