@@ -16,7 +16,7 @@ struct Args {
     port: u16,
 
     /// Host to use (default is 127.0.0.1)
-    #[arg(short, long, default_value = "127.0.0.1")]
+    #[arg(long, default_value = "127.0.0.1")]
     host: String,
 
     /// Audio file to play
@@ -58,7 +58,6 @@ async fn main() -> Result<()> {
 
     HttpServer::new(|| App::new().wrap(Cors::permissive().send_wildcard()).service(webrtc_offer))
         .bind((host, port))?
-        .disable_signals()
         .run()
         .await
         .map_err(anyhow::Error::from)
