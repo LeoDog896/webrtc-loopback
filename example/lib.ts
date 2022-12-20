@@ -11,7 +11,14 @@ export class Client {
             method: "POST",
             body: JSON.stringify(offer)
         })
-        const answer = await request.text()
-        console.log(answer)
+        
+        const data = await request.text()
+
+        try {
+            const answer = JSON.parse(data)
+            return answer;
+        } catch (e) {
+            throw new Error("An error occured: " + data)
+        }
     }
 }

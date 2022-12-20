@@ -16,7 +16,13 @@ async function main() {
     const offer = await peerConnection.createOffer();
     await peerConnection.setLocalDescription(offer);
 
-    client.watch(offer)
+    peerConnection.addEventListener("icecandidate", ({ candidate }) => {
+        if (candidate == null && peerConnection.localDescription != null) {
+            client.watch(peerConnection.localDescription);
+        } else if (candidate == null) {
+            throw new Error("Local description is null! This should not happen.");
+        }
+    })
 }
 
 main()
