@@ -269,7 +269,12 @@ pub async fn connect(
                 // Wait until PeerConnection has had no network activity for 30 seconds or another failure. It may be reconnected using an ICE Restart.
                 // Use webrtc.PeerConnectionStateDisconnected if you are interested in detecting faster timeout.
                 // Note that the PeerConnection may come back from PeerConnectionStateDisconnected.
-                println!("Peer Connection has gone to failed exiting");
+                println!("Peer Connection has gone to failed -- exiting now");
+                let _ = done_tx.try_send(());
+            }
+
+            if state == RTCPeerConnectionState::Closed {
+                println!("Peer Connection has gone to closed -- exiting now");
                 let _ = done_tx.try_send(());
             }
 

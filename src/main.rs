@@ -47,6 +47,7 @@ async fn main() -> Result<()> {
 
     HttpServer::new(|| App::new().service(webrtc_offer))
         .bind(("127.0.0.1", port))?
+        .disable_signals()
         .run()
         .await
         .map_err(anyhow::Error::from)
