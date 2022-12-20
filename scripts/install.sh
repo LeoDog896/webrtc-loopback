@@ -11,7 +11,6 @@ cd "$(dirname "$0")"
 
 main() {
     (cd ../example; yarn install)
-    cargo install --path ..
 }
 
 main "$@"
