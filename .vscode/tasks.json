@@ -6,7 +6,7 @@
         {
             "label": "WebRTC Media",
             "type": "shell",
-            "command": "cargo run",
+            "command": "cargo run --watch",
             "isBackground": true,
 			"presentation": {
 				"group": "examples",

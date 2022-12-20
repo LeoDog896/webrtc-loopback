@@ -4,6 +4,7 @@ extern crate lazy_static;
 mod peer_connection;
 mod signal;
 
+use actix_cors::Cors;
 use anyhow::Result;
 use peer_connection::connect;
 
@@ -25,7 +26,7 @@ struct Args {
     video: Option<String>,
 }
 
-#[post("/api/offer")]
+#[post("/api/watch")]
 async fn webrtc_offer(req_body: String) -> impl Responder {
     let args = Args::parse();
 
@@ -45,7 +46,7 @@ async fn main() -> Result<()> {
 
     println!("Starting server at http://127.0.0.1:{port}/");
 
-    HttpServer::new(|| App::new().service(webrtc_offer))
+    HttpServer::new(|| App::new().wrap(Cors::permissive()).service(webrtc_offer))
         .bind(("127.0.0.1", port))?
         .disable_signals()
         .run()
