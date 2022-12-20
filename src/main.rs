@@ -7,7 +7,7 @@ mod signal;
 use anyhow::Result;
 use peer_connection::connect;
 
-use actix_web::{get, post, App, HttpResponse, HttpServer, Responder};
+use actix_web::{post, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
 
 /// Start up a webrtc-media server
@@ -25,14 +25,17 @@ struct Args {
     video: Option<String>,
 }
 
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
+#[post("/api/offer")]
+async fn webrtc_offer(req_body: String) -> impl Responder {
+    let args = Args::parse();
 
-#[post("/echo")]
-async fn echo(req_body: String) -> impl Responder {
-    HttpResponse::Ok().body(req_body)
+    let peer_connection = connect(args.audio, args.video, &req_body, false).await;
+
+    // transform the below into a match statement
+    return match peer_connection {
+        Ok(_) => HttpResponse::Ok().body("ok"),
+        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+    };
 }
 
 #[actix_web::main]
@@ -40,16 +43,9 @@ async fn main() -> Result<()> {
     let args = Args::parse();
     let port = args.port;
 
-    // Start up the peer connection in a separate thread
-    tokio::spawn(async move {
-        if let Err(e) = connect(args.audio, args.video, true).await {
-            eprintln!("Error: {}", e);
-        }
-    });
-
     println!("Starting server at http://127.0.0.1:{}/", port);
 
-    HttpServer::new(|| App::new().service(hello).service(echo))
+    HttpServer::new(|| App::new().service(webrtc_offer))
         .bind(("127.0.0.1", port))?
         .run()
         .await.map_err(anyhow::Error::from)

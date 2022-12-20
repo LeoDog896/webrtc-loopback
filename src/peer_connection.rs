@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
@@ -27,7 +27,7 @@ use crate::signal;
 
 const OGG_PAGE_DURATION: Duration = Duration::from_millis(20);
 
-pub async fn connect(audio: Option<String>, video: Option<String>, debug: bool) -> Result<()> {
+pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, debug: bool) -> Result<()> {
     if debug {
         env_logger::Builder::new()
             .format(|buf, record| {
@@ -271,9 +271,7 @@ pub async fn connect(audio: Option<String>, video: Option<String>, debug: bool) 
     }));
 
     // Wait for the offer to be pasted
-    let line = signal::must_read_stdin()?;
-    let desc_data = signal::decode(line.as_str())?;
-    let offer = serde_json::from_str::<RTCSessionDescription>(&desc_data)?;
+    let offer = serde_json::from_str::<RTCSessionDescription>(&offer)?;
 
     // Set the remote SessionDescription
     peer_connection.set_remote_description(offer).await?;
@@ -298,7 +296,7 @@ pub async fn connect(audio: Option<String>, video: Option<String>, debug: bool) 
         let b64 = signal::encode(&json_str);
         println!("{}", b64);
     } else {
-        println!("generate local_description failed!");
+        return Err(anyhow!("Failed to get local description"));
     }
 
     println!("Press ctrl-c to stop");

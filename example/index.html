@@ -7,47 +7,6 @@
     <title>WebRTC Media Demo</title>
   </head>
   <body>
-    <div id="createRoom">
-      <h3>Create or join a room?</h3>
-      <button id="createBtn">BOB: Create</button>
-      <button id="joinBtn">ALICE: Join</button>
-    </div>
-
-    <div id="bobPrompt">
-      <h3>BOB: Send your local offer to ALICE</h3>
-      <input id="localOffer" />
-      <br />
-      <h3>Then, paste the "answer" you received</h3>
-      <input id="remoteAnswer" />
-      <br />
-      <br />
-      <button id="answerRecdBtn">Okay, I pasted it.</button>
-    </div>
-
-    <div id="alicePrompt">
-      <h3>ALICE: Paste the "offer" you received</h3>
-      <input id="remoteOffer" />
-      <br />
-      <br />
-      <button id="offerRecdBtn">Okay, I pasted it.</button>
-      <h3>Then, send your local answer to BOB</h3>
-      <input id="localAnswer" />
-    </div>
-
-    <div id="chatPrompt">
-      <h1>Chat</h1>
-      <br />
-      <div
-        id="chatlog"
-        style="height: 200px; overflow: auto; border: 1px solid"
-      ></div>
-      <br />
-      <input
-        type="text"
-        id="messageTextBox"
-        placeholder="Type your message here"
-      />
-      <button onclick="sendMessage()">Send message</button>
-    </div>
+    <video id="localVideo" autoplay playsinline></video>
   </body>
 </html>
