@@ -1,12 +1,8 @@
-#[macro_use]
-extern crate lazy_static;
-
 mod peer_connection;
-mod signal;
 
 use actix_cors::Cors;
 use anyhow::Result;
-use peer_connection::connect;
+use peer_connection::{connect, handle};
 
 use actix_web::{post, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
@@ -36,7 +32,14 @@ async fn webrtc_offer(req_body: String) -> impl Responder {
 
     // transform the below into a match statement
     match peer_connection {
-        Ok(_) => HttpResponse::Ok().body("ok"),
+        Ok(connection) => {
+            let description = serde_json::to_string(&connection.description);
+
+            match description {
+                Ok(answer) => HttpResponse::Ok().body(answer),
+                Err(e) => HttpResponse::InternalServerError().body(e.to_string())
+            }
+        },
         Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
     }
 }
@@ -48,7 +51,7 @@ async fn main() -> Result<()> {
 
     println!("Starting server at http://127.0.0.1:{port}/");
 
-    HttpServer::new(|| App::new().wrap(Cors::permissive()).service(webrtc_offer))
+    HttpServer::new(|| App::new().wrap(Cors::default().allow_any_origin().send_wildcard()).service(webrtc_offer))
         .bind(("127.0.0.1", port))?
         .disable_signals()
         .run()

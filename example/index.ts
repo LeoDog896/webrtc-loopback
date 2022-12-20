@@ -10,7 +10,8 @@ const peerConnection = new RTCPeerConnection(config);
 const video = document.querySelector<HTMLVideoElement>("localVideo")!;
 
 async function main() {
-    const client = new Client("http://localhost:8080")
+    const url = location.port ? location.origin + ":8080" : location.origin.replace("1234", "8080")
+    const client = new Client(url)
 
     const dataChannel = peerConnection.createDataChannel('dummy');
 

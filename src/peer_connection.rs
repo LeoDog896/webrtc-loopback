@@ -1,4 +1,6 @@
 use anyhow::{anyhow, Result};
+use tokio::sync::mpsc::Receiver;
+use webrtc::peer_connection::RTCPeerConnection;
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
@@ -23,16 +25,20 @@ use webrtc::track::track_local::track_local_static_sample::TrackLocalStaticSampl
 use webrtc::track::track_local::TrackLocal;
 use webrtc::Error;
 
-use crate::signal;
-
 const OGG_PAGE_DURATION: Duration = Duration::from_millis(20);
+
+pub struct PeerConnectionInfo {
+    pub connection: Arc<RTCPeerConnection>,
+    pub description: RTCSessionDescription,
+    pub closer: Receiver<()>
+}
 
 pub async fn connect(
     audio: Option<String>,
     video: Option<String>,
     offer: &str,
     debug: bool,
-) -> Result<()> {
+) -> Result<PeerConnectionInfo> {
     if debug {
         env_logger::Builder::new()
             .format(|buf, record| {
@@ -99,7 +105,7 @@ pub async fn connect(
     let notify_video = notify_tx.clone();
     let notify_audio = notify_tx.clone();
 
-    let (done_tx, mut done_rx) = tokio::sync::mpsc::channel::<()>(1);
+    let (done_tx, done_rx) = tokio::sync::mpsc::channel::<()>(1);
     let video_done_tx = done_tx.clone();
     let audio_done_tx = done_tx.clone();
 
@@ -128,7 +134,7 @@ pub async fn connect(
             Result::<()>::Ok(())
         });
 
-        let video_file_name = video_file.to_owned();
+        let video_file_name = video_file.clone();
         tokio::spawn(async move {
             // Open a H264 file and start reading using our H264Reader
             let file = File::open(&video_file_name)?;
@@ -204,7 +210,7 @@ pub async fn connect(
             Result::<()>::Ok(())
         });
 
-        let audio_file_name = audio_file.to_owned();
+        let audio_file_name = audio_file.clone();
         tokio::spawn(async move {
             // Open a IVF file and start reading using our IVFReader
             let file = File::open(audio_file_name)?;
@@ -302,18 +308,21 @@ pub async fn connect(
     // in a production application you should exchange ICE Candidates via OnICECandidate
     let _ = gather_complete.recv().await;
 
-    // Output the answer in base64 so we can paste it in browser
     if let Some(local_desc) = peer_connection.local_description().await {
-        let json_str = serde_json::to_string(&local_desc)?;
-        let b64 = signal::encode(&json_str);
-        println!("{b64}");
+        Ok(PeerConnectionInfo {
+            connection: peer_connection,
+            description: local_desc, 
+            closer: done_rx
+        })
     } else {
-        return Err(anyhow!("Failed to get local description"));
+        Err(anyhow!("Failed to get local description"))
     }
+}
 
+pub async fn handle(mut info: PeerConnectionInfo) -> Result<()> {
     println!("Press ctrl-c to stop");
     tokio::select! {
-        _ = done_rx.recv() => {
+        _ = info.closer.recv() => {
             println!("received done signal!");
         }
         _ = tokio::signal::ctrl_c() => {
@@ -321,7 +330,7 @@ pub async fn connect(
         }
     };
 
-    peer_connection.close().await?;
+    info.connection.close().await?;
 
     Ok(())
 }
