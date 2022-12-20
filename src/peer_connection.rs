@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use std::fs::File;
 use std::io::BufReader;
 use std::io::Write;
@@ -27,7 +27,12 @@ use crate::signal;
 
 const OGG_PAGE_DURATION: Duration = Duration::from_millis(20);
 
-pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, debug: bool) -> Result<()> {
+pub async fn connect(
+    audio: Option<String>,
+    video: Option<String>,
+    offer: &str,
+    debug: bool,
+) -> Result<()> {
     if debug {
         env_logger::Builder::new()
             .format(|buf, record| {
@@ -47,12 +52,12 @@ pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, 
 
     if let Some(video_path) = &video {
         if !Path::new(video_path).exists() {
-            return Err(Error::new(format!("video file: '{}' not exist", video_path)).into());
+            return Err(Error::new(format!("video file: '{video_path}' not exist")).into());
         }
     }
     if let Some(audio_path) = &audio {
         if !Path::new(audio_path).exists() {
-            return Err(Error::new(format!("audio file: '{}' not exist", audio_path)).into());
+            return Err(Error::new(format!("audio file: '{audio_path}' not exist")).into());
         }
     }
 
@@ -133,7 +138,7 @@ pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, 
             // Wait for connection established
             notify_video.notified().await;
 
-            println!("play video from disk file {}", video_file_name);
+            println!("play video from disk file {video_file_name}");
 
             // It is important to use a time.Ticker instead of time.Sleep because
             // * avoids accumulating skew, just calling time.Sleep didn't compensate for the time spent parsing the data
@@ -143,7 +148,7 @@ pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, 
                 let nal = match h264.next_nal() {
                     Ok(nal) => nal,
                     Err(err) => {
-                        println!("All video frames parsed and sent: {}", err);
+                        println!("All video frames parsed and sent: {err}");
                         break;
                     }
                 };
@@ -246,7 +251,7 @@ pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, 
     // This will notify you when the peer has connected/disconnected
     peer_connection.on_ice_connection_state_change(Box::new(
         move |connection_state: RTCIceConnectionState| {
-            println!("Connection State has changed {}", connection_state);
+            println!("Connection State has changed {connection_state}");
             if connection_state == RTCIceConnectionState::Connected {
                 notify_tx.notify_waiters();
             }
@@ -256,22 +261,24 @@ pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, 
 
     // Set the handler for Peer connection state
     // This will notify you when the peer has connected/disconnected
-    peer_connection.on_peer_connection_state_change(Box::new(move |s: RTCPeerConnectionState| {
-        println!("Peer Connection State has changed: {}", s);
+    peer_connection.on_peer_connection_state_change(Box::new(
+        move |state: RTCPeerConnectionState| {
+            println!("Peer Connection State has changed: {state}",);
 
-        if s == RTCPeerConnectionState::Failed {
-            // Wait until PeerConnection has had no network activity for 30 seconds or another failure. It may be reconnected using an ICE Restart.
-            // Use webrtc.PeerConnectionStateDisconnected if you are interested in detecting faster timeout.
-            // Note that the PeerConnection may come back from PeerConnectionStateDisconnected.
-            println!("Peer Connection has gone to failed exiting");
-            let _ = done_tx.try_send(());
-        }
+            if state == RTCPeerConnectionState::Failed {
+                // Wait until PeerConnection has had no network activity for 30 seconds or another failure. It may be reconnected using an ICE Restart.
+                // Use webrtc.PeerConnectionStateDisconnected if you are interested in detecting faster timeout.
+                // Note that the PeerConnection may come back from PeerConnectionStateDisconnected.
+                println!("Peer Connection has gone to failed exiting");
+                let _ = done_tx.try_send(());
+            }
 
-        Box::pin(async {})
-    }));
+            Box::pin(async {})
+        },
+    ));
 
     // Wait for the offer to be pasted
-    let offer = serde_json::from_str::<RTCSessionDescription>(&offer)?;
+    let offer = serde_json::from_str::<RTCSessionDescription>(offer)?;
 
     // Set the remote SessionDescription
     peer_connection.set_remote_description(offer).await?;
@@ -294,7 +301,7 @@ pub async fn connect(audio: Option<String>, video: Option<String>, offer: &str, 
     if let Some(local_desc) = peer_connection.local_description().await {
         let json_str = serde_json::to_string(&local_desc)?;
         let b64 = signal::encode(&json_str);
-        println!("{}", b64);
+        println!("{b64}");
     } else {
         return Err(anyhow!("Failed to get local description"));
     }
