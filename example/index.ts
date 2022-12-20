@@ -12,13 +12,15 @@ const video = document.querySelector<HTMLVideoElement>("localVideo")!;
 async function main() {
     const client = new Client("http://localhost:8080")
 
-    // create offer
-    const offer = await peerConnection.createOffer();
-    await peerConnection.setLocalDescription(offer);
+    const dataChannel = peerConnection.createDataChannel('dummy');
 
-    peerConnection.addEventListener("icecandidate", ({ candidate }) => {
+    // create offer
+    await peerConnection.setLocalDescription(await peerConnection.createOffer());
+
+    peerConnection.addEventListener("icecandidate", async ({ candidate }) => {
         if (candidate == null && peerConnection.localDescription != null) {
-            client.watch(peerConnection.localDescription);
+            const answer = await client.watch(peerConnection.localDescription);
+            console.log(answer)
         } else if (candidate == null) {
             throw new Error("Local description is null! This should not happen.");
         }
