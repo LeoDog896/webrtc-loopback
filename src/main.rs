@@ -15,6 +15,10 @@ struct Args {
     #[arg(short, long, default_value_t = 8080)]
     port: u16,
 
+    /// Host to use (default is 127.0.0.1)
+    #[arg(short, long, default_value = "127.0.0.1")]
+    host: String,
+
     /// Audio file to play
     #[arg(short, long)]
     audio: Option<String>,
@@ -48,11 +52,12 @@ async fn webrtc_offer(req_body: String) -> impl Responder {
 async fn main() -> Result<()> {
     let args = Args::parse();
     let port = args.port;
+    let host = args.host;
 
-    println!("Starting server at http://127.0.0.1:{port}/");
+    println!("Starting server at http://{host}:{port}/");
 
-    HttpServer::new(|| App::new().wrap(Cors::default().allow_any_origin().send_wildcard()).service(webrtc_offer))
-        .bind(("127.0.0.1", port))?
+    HttpServer::new(|| App::new().wrap(Cors::permissive().send_wildcard()).service(webrtc_offer))
+        .bind((host, port))?
         .disable_signals()
         .run()
         .await
