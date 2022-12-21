@@ -5,7 +5,7 @@ export class Client {
     this.server = server;
   }
 
-  async watch(offer: RTCSessionDescriptionInit) {
+  async watch(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
     console.log(this.server + "/api/watch");
     const request = await fetch(this.server + "/api/watch", {
       method: "POST",
@@ -16,7 +16,7 @@ export class Client {
 
     try {
       const answer = JSON.parse(data);
-      return answer;
+      return answer as RTCSessionDescriptionInit;
     } catch (e) {
       throw new Error("An error occured: " + data);
     }

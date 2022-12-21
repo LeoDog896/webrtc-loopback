@@ -1,7 +1,4 @@
 import { Client } from "./lib";
-
-const messageTextBox = document.querySelector<HTMLInputElement>("message")!;
-
 const config: RTCConfiguration = {
   iceServers: [
     {
@@ -30,12 +27,10 @@ const config: RTCConfiguration = {
 // The local browser's RTCPeerConnection
 const peerConnection = new RTCPeerConnection(config);
 
-const video = document.querySelector<HTMLVideoElement>("localVideo")!;
+const video = document.querySelector<HTMLVideoElement>("#localVideo")!;
 
 async function main() {
-  const url = location.port
-    ? location.origin + ":8080"
-    : location.origin.replace("1234", "8080");
+  const url = location.origin.replace("1234", "8080");
 
   console.log(`Connecting to url ${url}.`);
 
@@ -55,6 +50,7 @@ async function main() {
   peerConnection.addEventListener("track", (event) => {
     console.log("Found Track: ", event.streams[0]);
     mediaStream = event.streams[0];
+    video.srcObject = mediaStream;
   });
 
   peerConnection.addEventListener("icecandidate", async ({ candidate }) => {
@@ -62,6 +58,7 @@ async function main() {
     if (candidate == null && peerConnection.localDescription != null) {
       const answer = await client.watch(peerConnection.localDescription);
       console.log(answer);
+      peerConnection.setRemoteDescription(answer);
     } else if (candidate == null) {
       throw new Error("Local description is null! This should not happen.");
     }
