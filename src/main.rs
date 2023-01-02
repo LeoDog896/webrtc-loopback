@@ -26,6 +26,10 @@ struct Args {
     /// Video file to play
     #[arg(short, long)]
     video: Option<String>,
+
+    /// Whether to loop the audio/video files
+    #[arg(short, long)]
+    loop_: bool,
 }
 
 #[post("/api/watch")]
@@ -38,6 +42,8 @@ async fn webrtc_offer(req_body: String) -> impl Responder {
     match peer_connection {
         Ok(connection) => {
             let description = serde_json::to_string(&connection.description);
+            
+            tokio::spawn(handle(connection));
 
             match description {
                 Ok(answer) => HttpResponse::Ok().body(answer),
