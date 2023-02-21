@@ -2,7 +2,7 @@ import { Client } from "./lib";
 const config: RTCConfiguration = {
   iceServers: [
     {
-      urls: ["stun:stun.l.google.com:19302", "stun:openrelay.metered.ca:80"],
+      urls: ["stun:stun.l.google.com:19302"],
     },
     {
       urls: "turn:openrelay.metered.ca:80",

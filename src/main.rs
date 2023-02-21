@@ -1,3 +1,5 @@
+#[macro_use] extern crate log;
+
 mod peer_connection;
 
 use actix_cors::Cors;
@@ -36,7 +38,7 @@ struct Args {
 async fn webrtc_offer(req_body: String) -> impl Responder {
     let args = Args::parse();
 
-    let peer_connection = connect(args.audio, args.video, &req_body, false).await;
+    let peer_connection = connect(args.audio, args.video, &req_body).await;
 
     // transform the below into a match statement
     match peer_connection {
@@ -56,11 +58,13 @@ async fn webrtc_offer(req_body: String) -> impl Responder {
 
 #[actix_web::main]
 async fn main() -> Result<()> {
+    pretty_env_logger::init();
+
     let args = Args::parse();
     let port = args.port;
     let host = args.host;
 
-    println!("Starting server at http://{host}:{port}/");
+    info!("Starting server at http://{host}:{port}/");
 
     HttpServer::new(|| App::new().wrap(Cors::default().allow_any_origin().send_wildcard()).service(webrtc_offer))
         .bind((host, port))?

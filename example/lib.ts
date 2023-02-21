@@ -6,7 +6,6 @@ export class Client {
   }
 
   async watch(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
-    console.log(this.server + "/api/watch");
     const request = await fetch(this.server + "/api/watch", {
       method: "POST",
       body: JSON.stringify(offer),

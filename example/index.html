@@ -6,6 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>WebRTC Media Demo</title>
     <script defer src="index.ts" type="module"></script>
+    <style>
+      video {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    </style>
   </head>
   <body>
     <video id="localVideo" autoplay playsinline></video>

@@ -1,7 +1,6 @@
 use anyhow::{anyhow, Result};
 use std::fs::File;
 use std::io::BufReader;
-use std::io::Write;
 use std::path::Path;
 use std::sync::Arc;
 use tokio::sync::mpsc::Receiver;
@@ -37,25 +36,7 @@ pub async fn connect(
     audio: Option<String>,
     video: Option<String>,
     offer: &str,
-    debug: bool,
 ) -> Result<PeerConnectionInfo> {
-    if debug {
-        env_logger::Builder::new()
-            .format(|buf, record| {
-                writeln!(
-                    buf,
-                    "{}:{} [{}] {} - {}",
-                    record.file().unwrap_or("unknown"),
-                    record.line().unwrap_or(0),
-                    record.level(),
-                    chrono::Local::now().format("%H:%M:%S.%6f"),
-                    record.args()
-                )
-            })
-            .filter(None, log::LevelFilter::Trace)
-            .init();
-    }
-
     if let Some(video_path) = &video {
         if !Path::new(video_path).exists() {
             return Err(Error::new(format!("video file: '{video_path}' not exist")).into());
@@ -144,7 +125,7 @@ pub async fn connect(
             // Wait for connection established
             notify_video.notified().await;
 
-            println!("play video from disk file {video_file_name}");
+            debug!("play video from disk file {video_file_name}");
 
             // It is important to use a time.Ticker instead of time.Sleep because
             // * avoids accumulating skew, just calling time.Sleep didn't compensate for the time spent parsing the data
@@ -154,7 +135,7 @@ pub async fn connect(
                 let nal = match h264.next_nal() {
                     Ok(nal) => nal,
                     Err(err) => {
-                        println!("All video frames parsed and sent: {err}");
+                        debug!("All video frames parsed and sent: {err}");
                         break;
                     }
                 };
@@ -212,7 +193,7 @@ pub async fn connect(
             // Wait for connection established
             notify_audio.notified().await;
 
-            println!("play audio from disk file output.ogg");
+            debug!("play audio from disk file output.ogg");
 
             // It is important to use a time.Ticker instead of time.Sleep because
             // * avoids accumulating skew, just calling time.Sleep didn't compensate for the time spent parsing the data
@@ -248,7 +229,7 @@ pub async fn connect(
     // This will notify you when the peer has connected/disconnected
     peer_connection.on_ice_connection_state_change(Box::new(
         move |connection_state: RTCIceConnectionState| {
-            println!("Connection State has changed {connection_state}");
+            debug!("Connection State has changed {connection_state}");
             if connection_state == RTCIceConnectionState::Connected {
                 notify_tx.notify_waiters();
             }
@@ -260,18 +241,18 @@ pub async fn connect(
     // This will notify you when the peer has connected/disconnected
     peer_connection.on_peer_connection_state_change(Box::new(
         move |state: RTCPeerConnectionState| {
-            println!("Peer Connection State has changed: {state}",);
+            debug!("Peer Connection State has changed: {state}",);
 
             if state == RTCPeerConnectionState::Failed {
                 // Wait until PeerConnection has had no network activity for 30 seconds or another failure. It may be reconnected using an ICE Restart.
                 // Use webrtc.PeerConnectionStateDisconnected if you are interested in detecting faster timeout.
                 // Note that the PeerConnection may come back from PeerConnectionStateDisconnected.
-                println!("Peer Connection has gone to failed -- exiting now");
+                debug!("Peer Connection has gone to failed -- exiting now");
                 let _ = done_tx.try_send(());
             }
 
             if state == RTCPeerConnectionState::Closed {
-                println!("Peer Connection has gone to closed -- exiting now");
+                debug!("Peer Connection has gone to closed -- exiting now");
                 let _ = done_tx.try_send(());
             }
 
@@ -311,10 +292,9 @@ pub async fn connect(
 }
 
 pub async fn handle(mut info: PeerConnectionInfo) -> Result<()> {
-    println!("Press ctrl-c to stop");
     tokio::select! {
         _ = info.closer.recv() => {
-            println!("received done signal!");
+            trace!("received done signal!");
         }
         _ = tokio::signal::ctrl_c() => {
             println!();
