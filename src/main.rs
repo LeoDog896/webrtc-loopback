@@ -1,6 +1,7 @@
 #[macro_use] extern crate log;
 
 mod peer_connection;
+mod media_type;
 
 use actix_cors::Cors;
 use anyhow::Result;
@@ -8,6 +9,8 @@ use peer_connection::{connect, handle};
 
 use actix_web::{post, App, HttpResponse, HttpServer, Responder};
 use clap::Parser;
+
+use crate::media_type::MediaType;
 
 /// Start up a webrtc-media server
 #[derive(Parser, Debug)]
@@ -21,13 +24,8 @@ struct Args {
     #[arg(long, default_value = "127.0.0.1")]
     host: String,
 
-    /// Audio file to play
-    #[arg(short, long)]
-    audio: Option<String>,
-
-    /// Video file to play
-    #[arg(short, long)]
-    video: Option<String>,
+    /// Media sources to play from
+    media: Vec<String>,
 
     /// Whether to loop the audio/video files
     #[arg(short, long)]
@@ -38,7 +36,17 @@ struct Args {
 async fn webrtc_offer(req_body: String) -> impl Responder {
     let args = Args::parse();
 
-    let peer_connection = connect(args.audio, args.video, &req_body).await;
+    let media = args.media.get(0).unwrap();
+
+    let media_type = if media.starts_with("file:") {
+        MediaType::File(media.replace("file:", ""))
+    } else if media.starts_with("v4l2:") {
+        MediaType::Video4Linux2(media.replace("v4l2:", ""))
+    } else {
+        MediaType::File(media.to_string())
+    };
+
+    let peer_connection = connect(media_type, &req_body).await;
 
     // transform the below into a match statement
     match peer_connection {

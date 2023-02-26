@@ -24,6 +24,8 @@ use webrtc::track::track_local::track_local_static_sample::TrackLocalStaticSampl
 use webrtc::track::track_local::TrackLocal;
 use webrtc::Error;
 
+use crate::media_type::MediaType;
+
 const OGG_PAGE_DURATION: Duration = Duration::from_millis(20);
 
 pub struct PeerConnectionInfo {
@@ -33,15 +35,24 @@ pub struct PeerConnectionInfo {
 }
 
 pub async fn connect(
-    audio: Option<String>,
-    video: Option<String>,
+    media_type: MediaType,
     offer: &str,
 ) -> Result<PeerConnectionInfo> {
-    if let Some(video_path) = &video {
+
+    // TODO support audio
+    let audio: Option<String> = None;
+
+    if let MediaType::File(video_path) = &media_type {
         if !Path::new(video_path).exists() {
             return Err(Error::new(format!("video file: '{video_path}' not exist")).into());
         }
     }
+
+    let video = match media_type {
+        MediaType::File(video_path) => Some(video_path),
+        MediaType::Video4Linux2(video_path) => Some(video_path),
+    };
+
     if let Some(audio_path) = &audio {
         if !Path::new(audio_path).exists() {
             return Err(Error::new(format!("audio file: '{audio_path}' not exist")).into());
