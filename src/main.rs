@@ -48,7 +48,6 @@ async fn webrtc_offer(req_body: String) -> impl Responder {
 
     let peer_connection = connect(media_type, &req_body).await;
 
-    // transform the below into a match statement
     match peer_connection {
         Ok(connection) => {
             let description = serde_json::to_string(&connection.description);
